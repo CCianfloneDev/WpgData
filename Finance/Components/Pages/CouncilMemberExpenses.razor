@@ -1,0 +1,97 @@
+﻿@page "/CouncilMemberExpenses"
+@using Finance.Components.Data
+@attribute [StreamRendering]
+
+<PageTitle>Council Member Expenses</PageTitle>
+
+<h1>Council Member Expenses</h1>
+
+<p>This component demonstrates showing data.</p>
+
+@if (councilMemberExpenses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Journal Date</th>
+                <th>Ward Office</th>
+                <th>Council Member</th>
+                <th>Vendor</th>
+                <th>Expense Type</th>
+                <th>Description</th>
+                <th>Account</th>
+                <th>Amount ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var expense in councilMemberExpenses)
+            {
+                <tr>
+                    <td>@expense.JournalDate.ToString()</td>
+                    <td>@expense.WardOffice</td>
+                    <td>@expense.CouncilMember</td>
+                    <td>@expense.Vendor</td>
+                    <td>@expense.ExpenseType</td>
+                    <td>@expense.Description</td>
+                    <td>@expense.Account</td>
+                    <td>@expense.Amount</td>
+                </tr>
+            }            
+        </tbody>
+    </table>
+}
+
+@code {
+    private static readonly HttpClient _httpClient = new HttpClient();
+
+  //  private WeatherForecast[]? forecasts;
+    private List<WardExpense>? councilMemberExpenses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // // Simulate asynchronous loading to demonstrate streaming rendering
+        // await Task.Delay(500);
+
+        // var startDate = DateOnly.FromDateTime(DateTime.Now);
+        // var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
+        // forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        // {
+        //     Date = startDate.AddDays(index),
+        //     TemperatureC = Random.Shared.Next(-20, 55),
+        //     Summary = summaries[Random.Shared.Next(summaries.Length)]
+        // }).ToArray();
+
+        string url = "https://data.winnipeg.ca/resource/mgde-4fua.json";
+
+        try
+        {
+            // Fetch JSON data from the API
+            string jsonResponse = await _httpClient.GetStringAsync(url);
+
+            // Deserialize JSON into a list of WardExpense objects
+            councilMemberExpenses = JsonHelper.DeserializeList<WardExpense>(jsonResponse);
+
+            // // Print some results
+            // foreach (var expense in expenses)
+            // {
+            //     Console.WriteLine($"Ward: {expense.WardOffice}, Member: {expense.CouncilMember}, Amount: {expense.Amount:C}");
+            // }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching data: {ex.Message}");
+        }
+    }
+
+    private class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+}
