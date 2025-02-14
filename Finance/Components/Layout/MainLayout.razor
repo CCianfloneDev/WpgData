@@ -2,7 +2,7 @@
 @inherits LayoutComponentBase
 
 @* Required *@
-<MudThemeProvider />
+<MudThemeProvider @bind-IsDarkMode=_isDarkMode Theme="_theme" />
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -29,6 +29,8 @@
 </MudLayout>
 @code {
     bool _drawerOpen = true;
+    private MudTheme _theme = new();
+    private bool _isDarkMode = true;
 
     void DrawerToggle()
     {
