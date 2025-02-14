@@ -34,12 +34,20 @@ else
             <MudDataGridPager T="WardExpense" />
         </PagerContent>
     </MudDataGrid>
+
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6">Council Member Expenses Pie Chart - By Council Member</MudText>
+        <MudChart ChartType="ChartType.Donut" Width="500px" Height="500px" LegendPosition="Position.Right"
+        InputData="@councilMemberCounts" InputLabels="@councilMemberNames"></MudChart>
+    </MudPaper>
 }
 
 @code {
     private static readonly HttpClient _httpClient = new HttpClient();
     private string _searchString = "";
     private List<WardExpense>? councilMemberExpenses;
+    private double[]? councilMemberCounts;
+    private string[]? councilMemberNames;
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,6 +60,26 @@ else
 
             // Deserialize JSON into a list of WardExpense objects
             councilMemberExpenses = JsonHelper.DeserializeList<WardExpense>(jsonResponse);
+    
+            if (councilMemberExpenses == null)
+            {
+                return;    
+            }
+
+            // Count occurrences of each unique CouncilMember
+            councilMemberCounts = councilMemberExpenses
+                .Where(e => !string.IsNullOrEmpty(e.CouncilMember)) 
+                .GroupBy(e => e.CouncilMember) 
+                .Select(g => (double)g.Count()) 
+                .ToArray(); 
+
+
+            // Get a distinct list of council member names
+            councilMemberNames = councilMemberExpenses
+                .Where(e => !string.IsNullOrEmpty(e.CouncilMember)) 
+                .Select(e => e.CouncilMember + " - " + e.WardOffice) 
+                .Distinct() 
+                .ToArray();
         }
         catch (Exception ex)
         {
