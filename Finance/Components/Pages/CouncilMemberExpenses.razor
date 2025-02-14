@@ -1,6 +1,8 @@
 ﻿@page "/CouncilMemberExpenses"
 @using Finance.Components.Data
+@using MudBlazor
 @attribute [StreamRendering]
+@rendermode InteractiveServer
 
 <PageTitle>Council Member Expenses</PageTitle>
 
@@ -12,38 +14,37 @@
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Journal Date</th>
-                <th>Ward Office</th>
-                <th>Council Member</th>
-                <th>Vendor</th>
-                <th>Expense Type</th>
-                <th>Description</th>
-                <th>Account</th>
-                <th>Amount ($)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var expense in councilMemberExpenses)
-            {
-                <tr>
-                    <td>@expense.JournalDate.ToString()</td>
-                    <td>@expense.WardOffice</td>
-                    <td>@expense.CouncilMember</td>
-                    <td>@expense.Vendor</td>
-                    <td>@expense.ExpenseType</td>
-                    <td>@expense.Description</td>
-                    <td>@expense.Account</td>
-                    <td>@expense.Amount</td>
-                </tr>
-            }            
-        </tbody>
-    </table>
+    <MudTable Items="councilMemberExpenses" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info" Bordered="true" SortLabel="Sort By">
+        <HeaderContent>
+            <MudTh>Journal Date</MudTh>
+            <MudTh>Ward Office</MudTh>
+            <MudTh>Council Member</MudTh>
+            <MudTh>Vendor</MudTh>
+            <MudTh>Expense Type</MudTh>
+            <MudTh>Description</MudTh>
+            <MudTh>Account</MudTh>
+            <MudTh>Amount ($)</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="expense">
+            <MudTd DataLabel="Date">@expense.JournalDate</MudTd>
+            <MudTd DataLabel="Ward">@expense.WardOffice</MudTd>
+            <MudTd DataLabel="Member">@expense.CouncilMember</MudTd>
+            <MudTd DataLabel="Vendor">@expense.Vendor</MudTd>
+            <MudTd DataLabel="Type">@expense.ExpenseType</MudTd>
+            <MudTd DataLabel="Desc">@expense.Description</MudTd>
+            <MudTd DataLabel="Acct">@expense.Account</MudTd>
+            <MudTd DataLabel="Amt">@expense.Amount</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
 }
 
 @code {
+    private bool _hidePosition;
+    private bool _loading = true;
     private static readonly HttpClient _httpClient = new HttpClient();
 
     private List<WardExpense>? councilMemberExpenses;
@@ -59,6 +60,8 @@ else
 
             // Deserialize JSON into a list of WardExpense objects
             councilMemberExpenses = JsonHelper.DeserializeList<WardExpense>(jsonResponse);
+
+            _loading = false;
         }
         catch (Exception ex)
         {
