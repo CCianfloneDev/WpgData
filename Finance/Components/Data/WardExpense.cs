@@ -31,5 +31,7 @@ namespace Finance.Components.Data
 
         [JsonPropertyName("amount")]
         public  string? Amount { get; set; }
+
+        public double AmountNumeric => double.TryParse(Amount, out var value) ? value : 0;
     }
 }

@@ -1,4 +1,5 @@
 using Finance.Components;
+using Finance.Components.Services;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +9,17 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
+builder.Services.AddSingleton<WardExpenseService>();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+// Preload WardExpense data
+using (var scope = app.Services.CreateScope())
+{
+    var wardExpenseService = scope.ServiceProvider.GetRequiredService<WardExpenseService>();
+    await wardExpenseService.GetExpensesAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

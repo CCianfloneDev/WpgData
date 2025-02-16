@@ -1,8 +1,10 @@
 ﻿@page "/CouncilMemberExpenses"
 @using Finance.Components.Data
+@using Finance.Components.Services
 @using MudBlazor
 @attribute [StreamRendering]
 @rendermode InteractiveServer
+@inject WardExpenseService WardExpenseService
 
 <PageTitle>Council Member Expenses</PageTitle>
 
@@ -28,7 +30,7 @@ else
             <PropertyColumn Property="expense => expense.ExpenseType" Title="Expense Type" />
             <PropertyColumn Property="expense => expense.Description" Title="Description" />
             <PropertyColumn Property="expense => expense.Account" Title="Account" />
-            <PropertyColumn Property="expense => expense.Amount" Title="Amount" />
+            <PropertyColumn Property="expense => expense.AmountNumeric" Title="Amount" />
         </Columns>
         <PagerContent>
             <MudDataGridPager T="WardExpense" />
@@ -43,7 +45,6 @@ else
 }
 
 @code {
-    private static readonly HttpClient _httpClient = new HttpClient();
     private string _searchString = "";
     private List<WardExpense>? councilMemberExpenses;
     private double[]? councilMemberCounts;
@@ -51,40 +52,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        string url = "https://data.winnipeg.ca/resource/mgde-4fua.json";
-
-        try
-        {
-            // Fetch JSON data from the API
-            string jsonResponse = await _httpClient.GetStringAsync(url);
-
-            // Deserialize JSON into a list of WardExpense objects
-            councilMemberExpenses = JsonHelper.DeserializeList<WardExpense>(jsonResponse);
-    
-            if (councilMemberExpenses == null)
-            {
-                return;    
-            }
-
-            // Count occurrences of each unique CouncilMember
-            councilMemberCounts = councilMemberExpenses
-                .Where(e => !string.IsNullOrEmpty(e.CouncilMember)) 
-                .GroupBy(e => e.CouncilMember) 
-                .Select(g => (double)g.Count()) 
-                .ToArray(); 
-
-
-            // Get a distinct list of council member names
-            councilMemberNames = councilMemberExpenses
-                .Where(e => !string.IsNullOrEmpty(e.CouncilMember)) 
-                .Select(e => e.CouncilMember + " - " + e.WardOffice) 
-                .Distinct() 
-                .ToArray();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching data: {ex.Message}");
-        }
+        councilMemberExpenses = await WardExpenseService.GetExpensesAsync();
+        councilMemberCounts = WardExpenseService.GetCouncilMemberCounts();
+        councilMemberNames = WardExpenseService.GetCouncilMemberNames();
     }
 
     // quick filter - filter globally across multiple columns with the same input
@@ -115,7 +85,9 @@ else
             return true;
 
         if (expense.Amount != null && expense.Amount.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
+        {
+            return true;                   
+        }
 
         return false;
     };
