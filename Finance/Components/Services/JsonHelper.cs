@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace Finance.Components.Data
+namespace Finance.Components.Services
 {
     /// <summary>
     /// Provides helper methods for serializing and deserializing JSON data.

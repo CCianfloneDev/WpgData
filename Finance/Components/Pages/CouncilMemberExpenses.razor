@@ -2,9 +2,11 @@
 @using Finance.Components.Data
 @using Finance.Components.Services
 @using MudBlazor
+@using System.Text
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 @inject WardExpenseService WardExpenseService
+@inject IJSRuntime JavaScript
 
 <PageTitle>Council Member Expenses</PageTitle>
 
@@ -21,6 +23,11 @@ else
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                           AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+            <MudButton OnClick="@(() => DownloadCsv(councilMemberExpenses, "CouncilMemberExpenses.csv"))"
+                       StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary">
+                Download CSV
+            </MudButton>
         </ToolBarContent>
         <Columns>
             <PropertyColumn Property="expense => expense.JournalDate" Title="Journal Date" />
@@ -91,4 +98,14 @@ else
 
         return false;
     };
+
+    private async Task DownloadCsv<T>(List<T> data, string fileName)
+    {
+        if (data == null || !data.Any()) return;
+
+        string csvData = CsvExporter.ConvertToCsv(data);
+        var base64Csv = Convert.ToBase64String(Encoding.UTF8.GetBytes(csvData));
+
+        await JavaScript.InvokeVoidAsync("downloadFileFromBlazor", fileName, "text/csv", base64Csv);
+    }
 }
