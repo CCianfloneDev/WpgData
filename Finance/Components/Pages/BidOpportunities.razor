@@ -50,10 +50,14 @@ else
 
     <MudPaper Class="pa-4">
         <MudText Typo="Typo.h6">Bid opportunities bar chart - Per Year (From 2010 to latest year available)</MudText>
-        <MudChart ChartType="ChartType.Bar" ChartSeries="@Series" XAxisLabels="@yearLabels" Width="100%" Height="500px" />
+        <MudChart ChartType="ChartType.Bar" ChartSeries="@BarChartSeries" XAxisLabels="@yearLabels" Width="100%" Height="500px" />
     </MudPaper>
 
-  
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6">Bid opportunities Pie Chart - By contract officers(Top 10)</MudText>
+        <MudChart ChartType="ChartType.Donut" Width="500px" Height="500px" LegendPosition="Position.Right"
+                  InputData="@dataPerOfficer" InputLabels="@officerLabels"></MudChart>
+    </MudPaper>
 }
 
 @code {
@@ -62,15 +66,18 @@ else
     private Dictionary<int, int>? opportunitiesPerYear;
     private Dictionary<string, int>? topContractOfficers;
 
-    public ChartOptions Options = new ChartOptions();
-    public List<ChartSeries> Series = new List<ChartSeries>();
-
+    public ChartOptions BarChartOptions = new ChartOptions();
+    public List<ChartSeries> BarChartSeries = new List<ChartSeries>();
     private string[] yearLabels = [];
-    private double[] yearData = [];
+
+    private string[] officerLabels = [];
+    private double[] dataPerOfficer = [];
 
     protected override async Task OnInitializedAsync()
     {
         bidOpportunities = await BidOpportunityService.GetBidOpportunitiesAsync();
+
+        // Get a dictionary of Bid Opportunities per year
         opportunitiesPerYear = BidOpportunityService.GetBidOpportunitiesPerYear();
 
         // Sort Years in ascending order to extract opportunity counts for the year and the year labels
@@ -79,11 +86,15 @@ else
                                                 .OrderBy(x => x.Key)
                                                 .ToList();
         yearLabels = filteredYears.Select(x => x.Key.ToString()).ToArray();
-        yearData = filteredYears.Select(x => (double)x.Value).ToArray();
+        double[] yearData = filteredYears.Select(x => (double)x.Value).ToArray();
 
-        Series.Add(new ChartSeries() { Name = "Bid Opportunities", Data = yearData });
+        BarChartSeries.Add(new ChartSeries() { Name = "Bid Opportunities", Data = yearData });
 
+        // Get a Dictionary for top 10 contract officers and their numbers
         topContractOfficers = BidOpportunityService.GetTopContractOfficers(10);
+
+        officerLabels = topContractOfficers.Select(x => x.Key.ToString()).ToArray();
+        dataPerOfficer = topContractOfficers.Select(x => (double)x.Value).ToArray();
     }
 
     // quick filter - filter globally across multiple columns with the same input
