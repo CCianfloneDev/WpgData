@@ -1,7 +1,5 @@
 ﻿using Finance.Components.Data;
 
-using Finance.Components.Pages;
-
 
 namespace Finance.Components.Services
 {
@@ -55,7 +53,7 @@ namespace Finance.Components.Services
         /// Retrieves a List of top N contract officers and count of bid opportunities published/sanctioned by each officer in a descending manner
         /// </summary>
         /// <returns>A List of top N contract officers and count of bid opportunities published/sanctioned by each officer in a descending manner</returns>
-        public List<(string? ContractOfficer, int Count)> GetTopContractOfficers(int topN)
+        public Dictionary<string, int> GetTopContractOfficers(int topN)
         {
             if (bidOpportunities == null)
             {
@@ -67,8 +65,7 @@ namespace Finance.Components.Services
                 .GroupBy(e => e.ContractOfficer) // Group By Contract officers
                 .OrderByDescending(g => g.Count()) // Order all the contracts per officer by descending
                 .Take(topN) // Extract the top n officers
-                .Select(g => (g.Key, g.Count()))
-                .ToList();
+                .ToDictionary( g => g.Key, g => g.Count());
         }
     }
 }

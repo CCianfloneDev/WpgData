@@ -10,15 +10,18 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 builder.Services.AddSingleton<WardExpenseService>();
+builder.Services.AddSingleton<BidOpportunityService>();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Preload WardExpense data
+// Preload data
 using (var scope = app.Services.CreateScope())
 {
     var wardExpenseService = scope.ServiceProvider.GetRequiredService<WardExpenseService>();
+    var bidOpportunityService = scope.ServiceProvider.GetRequiredService<BidOpportunityService>();
     await wardExpenseService.GetExpensesAsync();
+    await bidOpportunityService.GetBidOpportunitiesAsync();
 }
 
 // Configure the HTTP request pipeline.
