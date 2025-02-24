@@ -16,16 +16,15 @@
 }
 else
 {
-    <MudDataGrid Items="operatingBruhget" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
-                 Hideable="true">
+    <MudDataGrid Items="operatingBruhget" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
         <ToolBarContent>
             <MudText Typo="Typo.h6">Bruhgeting</MudText>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             <MudSpacer />
             <MudButton OnClick="@(() => DownloadCsv(operatingBruhget, "bruhbudget.csv"))"
-                       StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary">
+            StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary">
                 Download CSV
             </MudButton>
         </ToolBarContent>
@@ -43,52 +42,38 @@ else
         </PagerContent>
     </MudDataGrid>
 
-    <MudPaper Class="pa-4">
-        <MudText Typo="Typo.h6">Service Pie Chart</MudText>
-        <MudChart ChartType="ChartType.Donut" Width="500px" Height="500px" LegendPosition="Position.Right"
-        InputData="@councilMemberCounts" InputLabels="@councilMemberNames"></MudChart>
+    <MudPaper Class="d-flex flex-column gap-4 flex-grow-1 px-2">
+        <MudText Typo="Typo.h6">Service Stacked Bar Chart</MudText>
+        <MudChart ChartType="ChartType.StackedBar" ChartOptions="@_barChartOptions" ChartSeries="@operatingBarShart" XAxisLabels="@chartLabels" Width="100%" Height="550px"></MudChart>
     </MudPaper>
 }
 
 @code {
     private string _searchString = "";
+    private readonly ChartOptions _barChartOptions = new();
     private List<OperatingBudget>? operatingBruhget;
-    private double[]? councilMemberCounts;
-    private string[]? councilMemberNames;
+    private List<ChartSeries>? operatingBarShart;
+    private String[]? chartLabels;
 
     protected override async Task OnInitializedAsync()
     {
         operatingBruhget = await OperatingBudgetService.GetExpensesAsync();
-        councilMemberCounts = OperatingBudgetService.GetBudgets();
-        councilMemberNames = OperatingBudgetService.GetBudgetServices();
+        (List<ChartSeries> Series, string[] XAxisLabels) chartData = OperatingBudgetService.GetBarChartData();
+        operatingBarShart = chartData.Series;
+        _barChartOptions.YAxisTicks = 150;
+        chartLabels = chartData.XAxisLabels;
     }
 
-        private Func<OperatingBudget, bool> _quickFilter => expense =>
+    private Func<OperatingBudget, bool> _quickFilter => expense =>
     {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if ($"{expense.BudgetYear}".Contains(_searchString))
-                return true;
-
-        if (expense.Service != null && expense.Service.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-        if (expense.SubService != null && expense.SubService.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-        if (expense.Category != null && expense.Category.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-        if (expense.YearOneProjection != null && expense.YearOneProjection.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;                   
-        }
-        if (expense.YearTwoProjection != null && expense.YearTwoProjection.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        if ($"{expense.BudgetYear}".Contains(_searchString)) return true;
+        if (expense.Service != null && expense.Service.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (expense.SubService != null && expense.SubService.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (expense.Category != null && expense.Category.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (expense.YearOneProjection != null && expense.YearOneProjection.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;                         
+        if (expense.YearTwoProjection != null && expense.YearTwoProjection.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        
         return false;
     };
 
