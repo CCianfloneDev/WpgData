@@ -1,0 +1,89 @@
+﻿@page "/BudgetProjection"
+@using Finance.Components.Data
+@using Finance.Components.Services
+@using MudBlazor
+@using System.Text
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject OperatingBudgetService OperatingBudgetService
+@inject IJSRuntime JavaScript
+
+<PageTitle>Bruhgeting</PageTitle>
+
+@if (operatingBruhget == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <MudDataGrid Items="operatingBruhget" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Bruhgeting</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+            <MudButton OnClick="@(() => DownloadCsv(operatingBruhget, "bruhbudget.csv"))"
+            StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary">
+                Download CSV
+            </MudButton>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="expense => expense.Year" Title="Budget Date" />
+            <PropertyColumn Property="expense => expense.Service" Title="Service" />
+            <PropertyColumn Property="expense => expense.SubService" Title="Sub Service" />
+            <PropertyColumn Property="expense => expense.Category" Title="Category" />
+            <PropertyColumn Property="expense => expense.BudgetYear" Title="Budget Year" />
+            <PropertyColumn Property="expense => expense.YearOneProjection" Title="Year One Prediction" />
+            <PropertyColumn Property="expense => expense.YearTwoProjection" Title="Year Two Prediction" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="OperatingBudget" />
+        </PagerContent>
+    </MudDataGrid>
+
+    <MudPaper Class="d-flex flex-column gap-4 flex-grow-1 px-2">
+        <MudText Typo="Typo.h6">Service Stacked Bar Chart</MudText>
+        <MudChart ChartType="ChartType.StackedBar" ChartOptions="@_barChartOptions" ChartSeries="@operatingBarShart" XAxisLabels="@chartLabels" Width="100%" Height="550px"></MudChart>
+    </MudPaper>
+}
+
+@code {
+    private string _searchString = "";
+    private readonly ChartOptions _barChartOptions = new();
+    private List<OperatingBudget>? operatingBruhget;
+    private List<ChartSeries>? operatingBarShart;
+    private String[]? chartLabels;
+
+    protected override async Task OnInitializedAsync()
+    {
+        operatingBruhget = await OperatingBudgetService.GetExpensesAsync();
+        (List<ChartSeries> Series, string[] XAxisLabels) chartData = OperatingBudgetService.GetBarChartData();
+        operatingBarShart = chartData.Series;
+        _barChartOptions.YAxisTicks = 150;
+        chartLabels = chartData.XAxisLabels;
+    }
+
+    private Func<OperatingBudget, bool> _quickFilter => expense =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        if ($"{expense.BudgetYear}".Contains(_searchString)) return true;
+        if (expense.Service != null && expense.Service.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (expense.SubService != null && expense.SubService.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (expense.Category != null && expense.Category.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (expense.YearOneProjection != null && expense.YearOneProjection.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;                         
+        if (expense.YearTwoProjection != null && expense.YearTwoProjection.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        
+        return false;
+    };
+
+    private async Task DownloadCsv<T>(List<T> data, string fileName)
+    {
+        if (data == null || !data.Any()) return;
+
+        string csvData = CsvExporter.ConvertToCsv(data);
+        var base64Csv = Convert.ToBase64String(Encoding.UTF8.GetBytes(csvData));
+
+        await JavaScript.InvokeVoidAsync("downloadFileFromBlazor", fileName, "text/csv", base64Csv);
+    }
+}
