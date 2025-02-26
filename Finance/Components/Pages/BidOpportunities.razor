@@ -1,0 +1,151 @@
+﻿@page "/BidOpportunities"
+@using Finance.Components.Data
+@using Finance.Components.Services
+@using MudBlazor
+@using System.Text
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject BidOpportunityService BidOpportunityService
+@inject IJSRuntime JavaScript
+
+<PageTitle>Bid Opportunities</PageTitle>
+
+@if (bidOpportunities == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <MudDataGrid Items="bidOpportunities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
+                 Hideable="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Bid Opportunities</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+            <MudButton OnClick="@(() => DownloadCsv(bidOpportunities, "BidOpportunities.csv"))"
+                       StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary">
+                Download CSV
+            </MudButton>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.BidOpportunityNumber" Title="Bid Opportunity Number" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.Description" Title="Description" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.Year" Title="Year" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.ContractOfficer" Title="Contract Officer" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.ContractOfficerEmail" Title="Contract Officer E-mail" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.ContractAdministrator" Title="Contract Administrator" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.DateCreated.ToLongDateString()" Title="Date Created" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.SubmissionDeadline.ToLongDateString()" Title="Submission Deadline" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.Status" Title="Bid Status" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.TransactionType" Title="Transaction Type" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.TransactionCommodity" Title="Transaction Commodity" />
+            <PropertyColumn Property="bidOpportunity => bidOpportunity.MerxUrl.Url" Title="Bid MERX Page" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="BidOpportunity" />
+        </PagerContent>
+    </MudDataGrid>
+
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6">Bid opportunities bar chart - Per Year (From 2010 to latest year available)</MudText>
+        <MudChart ChartType="ChartType.Bar" ChartSeries="@BarChartSeries" XAxisLabels="@yearLabels" Width="100%" Height="500px" />
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6">Bid opportunities Pie Chart - By contract officers(Top 10)</MudText>
+        <MudChart ChartType="ChartType.Donut" Width="500px" Height="500px" LegendPosition="Position.Right"
+                  InputData="@dataPerOfficer" InputLabels="@officerLabels"></MudChart>
+    </MudPaper>
+}
+
+@code {
+    private string _searchString = "";
+    private List<BidOpportunity>? bidOpportunities;
+    private Dictionary<int, int>? opportunitiesPerYear;
+    private Dictionary<string, int>? topContractOfficers;
+
+    public ChartOptions BarChartOptions = new ChartOptions();
+    public List<ChartSeries> BarChartSeries = new List<ChartSeries>();
+    private string[] yearLabels = [];
+
+    private string[] officerLabels = [];
+    private double[] dataPerOfficer = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        bidOpportunities = await BidOpportunityService.GetBidOpportunitiesAsync();
+
+        // Get a dictionary of Bid Opportunities per year
+        opportunitiesPerYear = BidOpportunityService.GetBidOpportunitiesPerYear();
+
+        // Sort Years in ascending order to extract opportunity counts for the year and the year labels
+        // Filter years to only include 2010 and later
+        var filteredYears = opportunitiesPerYear.Where(x => x.Key >= 2010)
+                                                .OrderBy(x => x.Key)
+                                                .ToList();
+        yearLabels = filteredYears.Select(x => x.Key.ToString()).ToArray();
+        double[] yearData = filteredYears.Select(x => (double)x.Value).ToArray();
+
+        BarChartSeries.Add(new ChartSeries() { Name = "Bid Opportunities", Data = yearData });
+
+        // Get a Dictionary for top 10 contract officers and their numbers
+        topContractOfficers = BidOpportunityService.GetTopContractOfficers(10);
+
+        officerLabels = topContractOfficers.Select(x => x.Key.ToString()).ToArray();
+        dataPerOfficer = topContractOfficers.Select(x => (double)x.Value).ToArray();
+    }
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<BidOpportunity, bool> _quickFilter => bidOpportunity =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if ($"{bidOpportunity.Year}".Contains(_searchString))
+            return true;
+
+        if ($"{bidOpportunity.DateCreated}".Contains(_searchString))
+            return true;
+
+        if ($"{bidOpportunity.SubmissionDeadline}".Contains(_searchString))
+            return true;
+
+        if (bidOpportunity.BidOpportunityNumber != null && bidOpportunity.BidOpportunityNumber.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.Description != null && bidOpportunity.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.ContractOfficer != null && bidOpportunity.ContractOfficer.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.ContractOfficerEmail != null && bidOpportunity.ContractOfficerEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.ContractAdministrator != null && bidOpportunity.ContractAdministrator.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.Status != null && bidOpportunity.Status.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.TransactionType != null && bidOpportunity.TransactionType.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (bidOpportunity.TransactionCommodity != null && bidOpportunity.TransactionCommodity.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+    private async Task DownloadCsv<T>(List<T> data, string fileName)
+    {
+        if (data == null || !data.Any()) return;
+
+        string csvData = CsvExporter.ConvertToCsv(data);
+        var base64Csv = Convert.ToBase64String(Encoding.UTF8.GetBytes(csvData));
+
+        await JavaScript.InvokeVoidAsync("downloadFileFromBlazor", fileName, "text/csv", base64Csv);
+    }
+}
