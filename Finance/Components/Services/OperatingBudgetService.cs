@@ -47,7 +47,7 @@ namespace Finance.Components.Services
                 .GroupBy(e => e.Service)
                 .Select(g => new
                 {
-                    Service = g.Key.Length > 10 ? g.Key[..15] + "..." : g.Key, 
+                    Service = g.Key.Length > 15 ? g.Key[..15] + "..." : g.Key, 
                     OriginalService = g.Key,
                     TotalBudget = Math.Abs(g.Sum(e => double.TryParse(e.BudgetYear, out double result) ? result : 0))
                 })
