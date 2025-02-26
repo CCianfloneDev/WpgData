@@ -1,4 +1,5 @@
 using Finance.Components;
+using Finance.Components.Data;
 using Finance.Components.Services;
 using MudBlazor.Services;
 
@@ -10,6 +11,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 builder.Services.AddSingleton<WardExpenseService>();
+builder.Services.AddSingleton<OperatingBudgetService>();
 builder.Services.AddSingleton<BidOpportunityService>();
 builder.Services.AddHttpClient();
 
@@ -19,9 +21,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var wardExpenseService = scope.ServiceProvider.GetRequiredService<WardExpenseService>();
-    var bidOpportunityService = scope.ServiceProvider.GetRequiredService<BidOpportunityService>();
     await wardExpenseService.GetExpensesAsync();
-    await bidOpportunityService.GetBidOpportunitiesAsync();
 }
 
 // Configure the HTTP request pipeline.
