@@ -4,7 +4,7 @@ using MudBlazor;
 namespace Finance.Components.Services
 {
     /// <summary>
-    /// Service for retrieving and managing council member expense data.
+    /// Service for retrieving and managing Operating Budget data.
     /// </summary>
     /// <remarks>
     /// Initializes a new instance of the <see cref="WardExpenseService"/> class.
@@ -17,7 +17,7 @@ namespace Finance.Components.Services
         private const string Url = "https://data.winnipeg.ca/resource/xkie-s6ee.json";
 
         /// <summary>
-        /// Asynchronously retrieves the list of council member expenses from the API.
+        /// Asynchronously retrieves the list of Operating Budget By Service from the API.
         /// If data has already been fetched, returns the cached list.
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation, containing a list of <see cref="WardExpense"/>.</returns>
@@ -33,7 +33,7 @@ namespace Finance.Components.Services
         }
 
         /// <summary>
-        /// Returns formatter bar chart data, total revenue and expendatures / 100000
+        /// Returns formatter bar chart data, total revenue and expenditures / 100000
         /// </summary>
         /// <returns>Chart data</returns>
         public (List<ChartSeries> Series, string[] XAxisLabels) GetBarChartData()
