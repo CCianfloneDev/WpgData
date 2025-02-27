@@ -8,7 +8,7 @@
 @inject OperatingBudgetService OperatingBudgetService
 @inject IJSRuntime JavaScript
 
-<PageTitle>Bruhgeting</PageTitle>
+<PageTitle>Operating Budget</PageTitle>
 
 @if (operatingBruhget == null)
 {
@@ -18,7 +18,7 @@ else
 {
     <MudDataGrid Items="operatingBruhget" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
         <ToolBarContent>
-            <MudText Typo="Typo.h6">Bruhgeting</MudText>
+            <MudText Typo="Typo.h6">Operating Budget</MudText>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -43,7 +43,7 @@ else
     </MudDataGrid>
 
     <MudPaper Class="d-flex flex-column gap-4 flex-grow-1 px-2">
-        <MudText Typo="Typo.h6">Service Stacked Bar Chart</MudText>
+        <MudText Typo="Typo.h6">Operating Budget Stack Bar Chat - By Revenue and Expense Per Service (in millions)</MudText>
         <MudChart ChartType="ChartType.StackedBar" ChartOptions="@_barChartOptions" ChartSeries="@operatingBarShart" XAxisLabels="@chartLabels" Width="100%" Height="550px"></MudChart>
     </MudPaper>
 }
